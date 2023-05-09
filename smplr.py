@@ -132,9 +132,11 @@ class CanvasPanel(wx.Panel):
 class MyFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyFrame.__init__
+        size = (1180, 465)
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE
-        wx.Frame.__init__(self, *args, **kwds)
-        self.SetSize((944, 352))
+        wx.Frame.__init__(self, *args, **kwds, size=size)
+        # buttons are 94
+        self.SetSize(size)
         self.SetTitle("smplr")
 
         # Menu Bar
@@ -149,19 +151,23 @@ class MyFrame(wx.Frame):
         sizer_2 = wx.BoxSizer(wx.VERTICAL)
         sizer_1.Add(sizer_2, 1, wx.EXPAND, 0)
 
-        self.gauge_1 = wx.Gauge(self.panel_1, wx.ID_ANY, 64, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH)
+        self.gauge_1 = wx.Gauge(self.panel_1, wx.ID_ANY, 64, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(394, 4))
         sizer_2.Add(self.gauge_1, 0, wx.EXPAND, 0)
 
         grid_sizer_1 = wx.GridSizer(4, 4, 0, 0)
-        sizer_2.Add(grid_sizer_1, 1, wx.EXPAND, 0)
+        sizer_2.Add(grid_sizer_1, 1, wx.SHAPED | wx.FIXED_MINSIZE, 0)
 
         self.sample_list = []
         self.active_slotnum = 0 
+        slot_map = { 13:1, 14:2, 15:3, 16:4,
+                     9:5,  10:6, 11:7, 12:8,
+                     5:9,  6:10, 7:11, 8:12,
+                     1:13, 2:14, 3:15, 4:16 }
         for slot_number in range(1, 17, 1): 
             self.sample_list.append(smpl())
-            label = "slot_{:02d}".format(slot_number)
-            btn = wx.Button(self.panel_1, wx.ID_ANY, label)
-            grid_sizer_1.Add(btn, 0, wx.EXPAND | wx.FIXED_MINSIZE, 0)
+            label = "slot_{:02d}".format(slot_map[slot_number])
+            btn = wx.Button(self.panel_1, wx.ID_ANY, label, size=(94, 94))
+            grid_sizer_1.Add(btn, 0, wx.SHAPED | wx.FIXED_MINSIZE, 0)
             btn.Bind(wx.EVT_BUTTON, lambda evt, temp=label: self.slot_button(evt, temp))
 
         self.panel_2 = wx.Panel(self.panel_1, wx.ID_ANY, name="right")
@@ -297,6 +303,7 @@ class MyFrame(wx.Frame):
 #        self.frame.Show()
 #        return True
 
+# ctrl-alt-i
 class MyApp(wit.InspectableApp):
     def OnInit(self):
         self.Init()
