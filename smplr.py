@@ -8,10 +8,10 @@
 import wx
 import wx.lib.mixins.inspection as wit
 
-from matplotlib.figure import Figure
 from matplotlib.backends.backend_wxagg import (
     FigureCanvasWxAgg as FigureCanvas,
     NavigationToolbar2WxAgg as NavigationToolbar)
+from matplotlib.figure import Figure
 
 from smpl import smpl
 import math
@@ -57,8 +57,8 @@ class CanvasPanel(wx.Panel):
     def draw(self, wf):
         self.axes.clear()
         self.axes.plot(wf)
-        self.axes.autoscale(False)
         self.xlim = self.axes.get_xlim()
+        self.axes.autoscale(False)
         self.canvas.draw()
         self.canvas.Refresh()
 
