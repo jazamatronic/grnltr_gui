@@ -28,6 +28,7 @@ class smpl:
         self.num_bars = 0
         self.start = 0
         self.end = 0
+        self.loop = False
 
     def input_file_is_set(self):
         return hasattr(self, 'input_filename')
@@ -53,7 +54,10 @@ class smpl:
     #       loopability
     def preview(self):
         if self.input_file_is_set():
-            self.sd.play(self.get_waveform()[self.start:self.end], self.export_rate)
+            self.sd.play(self.get_waveform()[self.start:self.end], self.export_rate, loop=self.loop)
+
+    def stop(self):
+        self.sd.stop()
 
     def get_waveform(self):
         if not hasattr(self, 'wf_array'):
@@ -111,3 +115,6 @@ class smpl:
 
     def get_end(self):
         return self.end
+
+    def set_loop(self, loop):
+        self.loop = loop

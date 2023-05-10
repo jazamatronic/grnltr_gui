@@ -179,7 +179,7 @@ class MyFrame(wx.Frame):
 
         sizer_3 = wx.BoxSizer(wx.VERTICAL)
 
-        grid_sizer_2 = wx.FlexGridSizer(6, 2, 0, 0)
+        grid_sizer_2 = wx.FlexGridSizer(5, 2, 0, 0)
         grid_sizer_2.AddGrowableCol(1, 0)
         sizer_3.Add(grid_sizer_2, 1, wx.EXPAND, 0)
 
@@ -187,44 +187,46 @@ class MyFrame(wx.Frame):
         grid_sizer_2.Add(label_1, 0, 0, 0)
 
         self.text_ctrl_1 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        #self.text_ctrl_1.SetMaxLength(64)
         grid_sizer_2.Add(self.text_ctrl_1, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
 
         label_2 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_rate")
         grid_sizer_2.Add(label_2, 0, 0, 0)
 
         self.text_ctrl_2 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        #self.text_ctrl_2.SetMaxLength(64)
         grid_sizer_2.Add(self.text_ctrl_2, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
 
         label_3 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_channels")
         grid_sizer_2.Add(label_3, 0, 0, 0)
 
         self.text_ctrl_3 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        #self.text_ctrl_3.SetMaxLength(64)
         grid_sizer_2.Add(self.text_ctrl_3, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
 
         label_4 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_bitdepth")
         grid_sizer_2.Add(label_4, 0, 0, 0)
 
         self.text_ctrl_4 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        #self.text_ctrl_4.SetMaxLength(64)
         grid_sizer_2.Add(self.text_ctrl_4, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
 
         label_5 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_duration")
         grid_sizer_2.Add(label_5, 0, 0, 0)
 
         self.text_ctrl_5 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        #self.text_ctrl_5.SetMaxLength(64)
         grid_sizer_2.Add(self.text_ctrl_5, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
         
+        sizer_4 = wx.BoxSizer(wx.HORIZONTAL)
         self.load_sample = wx.Button(self.panel_2, wx.ID_ANY, "reload")
-        grid_sizer_2.Add(self.load_sample, 0, 0, 0)
+        sizer_4.Add(self.load_sample, 0, 0, 0)
 
         self.play_sample = wx.Button(self.panel_2, wx.ID_ANY, "play")
-        grid_sizer_2.Add(self.play_sample, 0, 0, 0)
+        sizer_4.Add(self.play_sample, 0, 0, 0)
 
-        #grid_sizer_2.Add((0, 0), 0, 0, 0)
+        self.stop_sample = wx.Button(self.panel_2, wx.ID_ANY, "stop")
+        sizer_4.Add(self.stop_sample, 0, 0, 0)
+
+        self.loop_sample = wx.CheckBox(self.panel_2, wx.ID_ANY, "loop")
+        sizer_4.Add(self.loop_sample, 0, 0, 0)
+
+        sizer_3.Add(sizer_4, 1, wx.EXPAND, 0)
 
         self.wf_panel = CanvasPanel(self.panel_2)
         sizer_3.Add(self.wf_panel, 1, wx.EXPAND, 0)
@@ -238,6 +240,8 @@ class MyFrame(wx.Frame):
 
         self.load_sample.Bind(wx.EVT_BUTTON, self.load_sample_button)
         self.play_sample.Bind(wx.EVT_BUTTON, self.play_sample_button)
+        self.stop_sample.Bind(wx.EVT_BUTTON, self.stop_sample_button)
+        self.loop_sample.Bind(wx.EVT_CHECKBOX, self.loop_sample_checkbox)
 
         self.lastdir = ""
 
@@ -265,6 +269,7 @@ class MyFrame(wx.Frame):
         self.text_ctrl_3.SetValue(str(sample_list[active_slotnum].input_channels))
         self.text_ctrl_4.SetValue(str(sample_list[active_slotnum].input_bitdepth))
         self.text_ctrl_5.SetValue(str(sample_list[active_slotnum].input_duration))
+        self.loop_sample.SetValue(sample_list[active_slotnum].loop)
         self.wf_panel.draw(sample_list[active_slotnum].get_waveform())
 
     def clear_sample_info(self):
@@ -273,6 +278,7 @@ class MyFrame(wx.Frame):
         self.text_ctrl_3.SetValue('')
         self.text_ctrl_4.SetValue('')
         self.text_ctrl_5.SetValue('')
+        self.loop_sample.SetValue(False)
         self.wf_panel.clear()
 
     def slot_button(self, event, button_label):  # wxGlade: MyFrame.<event_handler>
@@ -300,6 +306,12 @@ class MyFrame(wx.Frame):
 
     def play_sample_button(self, event): 
         sample_list[active_slotnum].preview()
+
+    def stop_sample_button(self, event): 
+        sample_list[active_slotnum].stop()
+
+    def loop_sample_checkbox(self, event): 
+        sample_list[active_slotnum].set_loop(self.loop_sample.GetValue())
 
 # end of class MyFrame
 
