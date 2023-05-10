@@ -37,17 +37,11 @@ class CanvasPanel(wx.Panel):
         self.canvas.mpl_connect("button_press_event", self.click_event)
         self.canvas.Bind(wx.EVT_ENTER_WINDOW, self.change_cursor)
         self.xlim = None
-        #these should be per sample really
-        #then startfill/endfill should be taken from the waveform itself
-        self.start = None
-        self.end = None
         self.startfill = None
         self.endfill = None
 
     def clear(self):
         self.xlim = None
-        self.start = None
-        self.end = None
         self.startfill = None
         self.endfill = None
         self.axes.clear()
@@ -58,7 +52,14 @@ class CanvasPanel(wx.Panel):
         self.axes.clear()
         self.axes.plot(wf)
         self.xlim = self.axes.get_xlim()
+        self.ylim = self.axes.get_ylim()
         self.axes.autoscale(False)
+        start = sample_list[active_slotnum].get_start()
+        end = sample_list[active_slotnum].get_end()
+        if (start > 0):
+            self.startfill = self.axes.fill((self.xlim[0], start, start, self.xlim[0]), (self.ylim[0], self.ylim[0], self.ylim[-1], self.ylim[-1]), "b", alpha=0.3)
+        if (end < sample_list[active_slotnum].num_samples):
+            self.endfill = self.axes.fill((self.xlim[-1], end, end, self.xlim[-1]), (self.ylim[0], self.ylim[0], self.ylim[-1], self.ylim[-1]), "b", alpha=0.3)
         self.canvas.draw()
         self.canvas.Refresh()
 
@@ -91,37 +92,38 @@ class CanvasPanel(wx.Panel):
             return
         xdata = evt.xdata
         xlim = self.axes.get_xlim()
-        ylim = self.axes.get_ylim()
         xrange = xlim[-1] - xlim[0]
         xrange10pct = xrange * 0.1
         if evt.button == 1:
             if self.startfill != None:
                 for f in self.startfill:
                     f.remove()
-            self.startfill = self.axes.fill((self.xlim[0], xdata, xdata, self.xlim[0]), (ylim[0], ylim[0], ylim[-1], ylim[-1]), "b", alpha=0.3)
-            self.start = xdata
+            self.startfill = self.axes.fill((self.xlim[0], xdata, xdata, self.xlim[0]), (self.ylim[0], self.ylim[0], self.ylim[-1], self.ylim[-1]), "b", alpha=0.3)
+            sample_list[active_slotnum].set_start(xdata)
             newxl = max(self.xlim[0],  xdata - xrange10pct)
             self.axes.set_xlim((newxl, xlim[-1]))
         if evt.button == 3:
             if self.endfill != None:
                 for f in self.endfill:
                     f.remove()
-            self.endfill = self.axes.fill((self.xlim[-1], xdata, xdata, self.xlim[-1]), (ylim[0], ylim[0], ylim[-1], ylim[-1]), "b", alpha=0.3)
-            self.end = xdata
+            self.endfill = self.axes.fill((self.xlim[-1], xdata, xdata, self.xlim[-1]), (self.ylim[0], self.ylim[0], self.ylim[-1], self.ylim[-1]), "b", alpha=0.3)
+            sample_list[active_slotnum].set_end(xdata)
             newxr = min(self.xlim[-1], xdata + xrange10pct)
             self.axes.set_xlim((xlim[0], newxr))
         if evt.button == 2:
-            if ((self.start != None) and (xdata < self.start)):
+            start = sample_list[active_slotnum].get_start()
+            end = sample_list[active_slotnum].get_end()
+            if (xdata < start):
                 for f in self.startfill:
                     f.remove()
-                self.start = None
+                sample_list[active_slotnum].set_start(0)
                 self.startfill = None
                 newxl = self.xlim[0]
                 self.axes.set_xlim((newxl, xlim[-1]))
-            if ((self.end != None) and (xdata > self.end)):
+            if (xdata > end):
                 for f in self.endfill:
                     f.remove()
-                self.end = None
+                sample_list[active_slotnum].set_end(-1)
                 self.endfill = None
                 newxr = self.xlim[-1]
                 self.axes.set_xlim((xlim[0], newxr))
@@ -147,9 +149,13 @@ class MyFrame(wx.Frame):
         self.panel_1 = wx.Panel(self, wx.ID_ANY, name="main")
 
         sizer_1 = wx.BoxSizer(wx.HORIZONTAL)
+        self.panel_1.SetSizer(sizer_1)
 
         sizer_2 = wx.BoxSizer(wx.VERTICAL)
-        sizer_1.Add(sizer_2, 1, wx.EXPAND, 0)
+        flags = wx.SizerFlags(0)
+        flags.Expand()
+        flags.Align(wx.ALIGN_LEFT)
+        sizer_1.Add(sizer_2, flags)
 
         self.gauge_1 = wx.Gauge(self.panel_1, wx.ID_ANY, 64, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(394, 4))
         sizer_2.Add(self.gauge_1, 0, wx.EXPAND, 0)
@@ -157,14 +163,12 @@ class MyFrame(wx.Frame):
         grid_sizer_1 = wx.GridSizer(4, 4, 0, 0)
         sizer_2.Add(grid_sizer_1, 1, wx.SHAPED | wx.FIXED_MINSIZE, 0)
 
-        self.sample_list = []
-        self.active_slotnum = 0 
         slot_map = { 13:1, 14:2, 15:3, 16:4,
                      9:5,  10:6, 11:7, 12:8,
                      5:9,  6:10, 7:11, 8:12,
                      1:13, 2:14, 3:15, 4:16 }
         for slot_number in range(1, 17, 1): 
-            self.sample_list.append(smpl())
+            sample_list.append(smpl())
             label = "slot_{:02d}".format(slot_map[slot_number])
             btn = wx.Button(self.panel_1, wx.ID_ANY, label, size=(94, 94))
             grid_sizer_1.Add(btn, 0, wx.SHAPED | wx.FIXED_MINSIZE, 0)
@@ -176,37 +180,43 @@ class MyFrame(wx.Frame):
         sizer_3 = wx.BoxSizer(wx.VERTICAL)
 
         grid_sizer_2 = wx.FlexGridSizer(6, 2, 0, 0)
+        grid_sizer_2.AddGrowableCol(1, 0)
         sizer_3.Add(grid_sizer_2, 1, wx.EXPAND, 0)
 
         label_1 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_file")
         grid_sizer_2.Add(label_1, 0, 0, 0)
 
         self.text_ctrl_1 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        grid_sizer_2.Add(self.text_ctrl_1, 0, 0, 0)
+        #self.text_ctrl_1.SetMaxLength(64)
+        grid_sizer_2.Add(self.text_ctrl_1, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
 
         label_2 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_rate")
         grid_sizer_2.Add(label_2, 0, 0, 0)
 
         self.text_ctrl_2 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        grid_sizer_2.Add(self.text_ctrl_2, 0, 0, 0)
+        #self.text_ctrl_2.SetMaxLength(64)
+        grid_sizer_2.Add(self.text_ctrl_2, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
 
         label_3 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_channels")
         grid_sizer_2.Add(label_3, 0, 0, 0)
 
         self.text_ctrl_3 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        grid_sizer_2.Add(self.text_ctrl_3, 0, 0, 0)
+        #self.text_ctrl_3.SetMaxLength(64)
+        grid_sizer_2.Add(self.text_ctrl_3, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
 
         label_4 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_bitdepth")
         grid_sizer_2.Add(label_4, 0, 0, 0)
 
         self.text_ctrl_4 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        grid_sizer_2.Add(self.text_ctrl_4, 0, 0, 0)
+        #self.text_ctrl_4.SetMaxLength(64)
+        grid_sizer_2.Add(self.text_ctrl_4, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
 
         label_5 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_duration")
         grid_sizer_2.Add(label_5, 0, 0, 0)
 
         self.text_ctrl_5 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        grid_sizer_2.Add(self.text_ctrl_5, 0, 0, 0)
+        #self.text_ctrl_5.SetMaxLength(64)
+        grid_sizer_2.Add(self.text_ctrl_5, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
         
         self.load_sample = wx.Button(self.panel_2, wx.ID_ANY, "reload")
         grid_sizer_2.Add(self.load_sample, 0, 0, 0)
@@ -223,7 +233,6 @@ class MyFrame(wx.Frame):
 
         self.panel_2.SetSizer(sizer_3)
 
-        self.panel_1.SetSizer(sizer_1)
 
         self.Layout()
 
@@ -251,16 +260,14 @@ class MyFrame(wx.Frame):
             return pathname
 
     def display_sample_info(self):
-        slotnum = self.active_slotnum
-        self.text_ctrl_1.SetValue(self.sample_list[slotnum].input_filename)
-        self.text_ctrl_2.SetValue(str(self.sample_list[slotnum].input_rate))
-        self.text_ctrl_3.SetValue(str(self.sample_list[slotnum].input_channels))
-        self.text_ctrl_4.SetValue(str(self.sample_list[slotnum].input_bitdepth))
-        self.text_ctrl_5.SetValue(str(self.sample_list[slotnum].input_duration))
-        self.wf_panel.draw(self.sample_list[slotnum].get_waveform())
+        self.text_ctrl_1.SetValue(sample_list[active_slotnum].input_filename)
+        self.text_ctrl_2.SetValue(str(sample_list[active_slotnum].input_rate))
+        self.text_ctrl_3.SetValue(str(sample_list[active_slotnum].input_channels))
+        self.text_ctrl_4.SetValue(str(sample_list[active_slotnum].input_bitdepth))
+        self.text_ctrl_5.SetValue(str(sample_list[active_slotnum].input_duration))
+        self.wf_panel.draw(sample_list[active_slotnum].get_waveform())
 
     def clear_sample_info(self):
-        slotnum = self.active_slotnum
         self.text_ctrl_1.SetValue('')
         self.text_ctrl_2.SetValue('')
         self.text_ctrl_3.SetValue('')
@@ -271,15 +278,15 @@ class MyFrame(wx.Frame):
     def slot_button(self, event, button_label):  # wxGlade: MyFrame.<event_handler>
         slot, slotnumstr = button_label.split('_')
         slotnum = int(slotnumstr) - 1
-        self.active_slotnum = slotnum
+        active_slotnum = slotnum
         #print("{} {}".format(button_label, slotnum))
-        if (self.sample_list[slotnum].input_file_is_set() == False):
+        if (sample_list[slotnum].input_file_is_set() == False):
             pathname = self.open_wav()
             if pathname is None:
                 self.clear_sample_info()
                 return
             else:
-                self.sample_list[slotnum].set_input_file(pathname)
+                sample_list[slotnum].set_input_file(pathname)
         self.display_sample_info()
         event.Skip()
 
@@ -287,12 +294,12 @@ class MyFrame(wx.Frame):
         pathname = self.open_wav()
         if pathname is None:
             return
-        self.sample_list[self.active_slotnum].set_input_file(pathname)
+        sample_list[active_slotnum].set_input_file(pathname)
         self.display_sample_info()
         event.Skip()
 
     def play_sample_button(self, event): 
-        self.sample_list[self.active_slotnum].preview()
+        sample_list[active_slotnum].preview()
 
 # end of class MyFrame
 
@@ -314,5 +321,7 @@ class MyApp(wit.InspectableApp):
 # end of class MyApp
 
 if __name__ == "__main__":
+    sample_list = []
+    active_slotnum = 0 
     app = MyApp()
     app.MainLoop()

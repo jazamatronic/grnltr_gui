@@ -18,7 +18,7 @@ class smpl:
     import math
     import librosa
     import os
-    import playsound as ps
+    import sounddevice as sd
     def __init__(self):
         self.export_rate = 48000
         self.export_channels = 1
@@ -26,6 +26,8 @@ class smpl:
         self.size_estimate = 0
         self.bpm = 0
         self.num_bars = 0
+        self.start = 0
+        self.end = 0
 
     def input_file_is_set(self):
         return hasattr(self, 'input_filename')
@@ -37,6 +39,9 @@ class smpl:
         self.input_bitdepth = self.sox.file_info.bitdepth(self.input_filename)
         self.input_duration = self.sox.file_info.duration(self.input_filename)
         self.size_estimate = self.math.ceil(self.input_duration * self.export_rate * (self.export_bitdepth / 8)) 
+        self.num_samples = self.math.ceil(self.input_duration * self.export_rate)
+        self.set_start(0)
+        self.set_end(self.num_samples)
         self.tfm = self.sox.Transformer()
         self.tfm.set_output_format(file_type='wav', rate=self.export_rate, channels=self.export_channels, bits=self.export_bitdepth, encoding='signed-integer')
 
@@ -48,11 +53,12 @@ class smpl:
     #       loopability
     def preview(self):
         if self.input_file_is_set():
-            self.ps.playsound(self.input_filename, False)
-
+            self.sd.play(self.get_waveform()[self.start:self.end], self.export_rate)
 
     def get_waveform(self):
-        return self.tfm.build_array(self.input_filename)
+        if not hasattr(self, 'wf_array'):
+            self.wf_array = self.tfm.build_array(self.input_filename)
+        return self.wf_array
 
     def export_wav(self):
         if hasattr(self, 'export_filename'):
@@ -69,7 +75,7 @@ class smpl:
         self.bpm = bpm
 
     def estimate_bars(self):
-        if self.bpm != 0:
+        if (self.bpm != 0):
             beats_per_second = self.bpm / 60
             seconds_per_bar = 4 / beats_per_second 
             num_bars = self.input_duration / seconds_per_bar
@@ -83,3 +89,25 @@ class smpl:
             return "{},{},{:.2f},{:.2f},{}".format(self.os.path.basename(self.export_filename), self.os.path.basename(self.input_filename), self.bpm, self.num_bars, self.size_estimate)
         else: 
             print('Export filename not defined - please set_export_filename')
+
+    def set_start(self, start):
+        start = self.math.floor(start)
+        if (start < 0):
+            start = 0
+        if (start > self.num_samples):
+            start = self.num_samples 
+        self.start = start
+
+    def set_end(self, end):
+        end = self.math.ceil(end)
+        if (end < 0):
+            end = self.num_samples
+        if (end > self.num_samples):
+            end = self.num_samples
+        self.end = end
+
+    def get_start(self):
+        return self.start
+
+    def get_end(self):
+        return self.end

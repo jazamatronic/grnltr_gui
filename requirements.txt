@@ -1,4 +1,4 @@
 sox
 librosa
-playsound
+sounddevice
 matplotlib
