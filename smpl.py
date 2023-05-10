@@ -71,9 +71,12 @@ class smpl:
             print('Export filename not defined - please set_export_filename')
 
     def estimate_bpm(self):
-        y, sr = self.librosa.load(self.input_filename)
-        tempo, beat_frames = self.librosa.beat.beat_track(y=y, sr=sr)
-        return tempo
+        if self.input_file_is_set():
+            y, sr = self.librosa.load(self.input_filename)
+            tempo, beat_frames = self.librosa.beat.beat_track(y=y, sr=sr)
+            return tempo
+        else:
+            return 0
 
     def set_bpm(self, bpm):
         self.bpm = bpm

@@ -27,8 +27,8 @@ class CanvasPanel(wx.Panel):
         self.axes = self.figure.add_subplot()
         self.axes.get_yaxis().set_visible(False)
         self.canvas = FigureCanvas(self, -1, self.figure)
-        self.toolbar = NavigationToolbar(self.canvas)
-        self.toolbar.Realize()
+        #self.toolbar = NavigationToolbar(self.canvas)
+        #self.toolbar.Realize()
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
         self.SetSizer(self.sizer)
@@ -134,12 +134,14 @@ class CanvasPanel(wx.Panel):
 class MyFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyFrame.__init__
-        size = (1180, 465)
+        size = (1500, 500)
         kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE
         wx.Frame.__init__(self, *args, **kwds, size=size)
         # buttons are 94
         self.SetSize(size)
         self.SetTitle("smplr")
+
+        self.btns = {}
 
         # Menu Bar
         self.frame_menubar = wx.MenuBar()
@@ -170,16 +172,17 @@ class MyFrame(wx.Frame):
         for slot_number in range(1, 17, 1): 
             sample_list.append(smpl())
             label = "slot_{:02d}".format(slot_map[slot_number])
-            btn = wx.Button(self.panel_1, wx.ID_ANY, label, size=(94, 94))
+            btn = wx.ToggleButton(self.panel_1, wx.ID_ANY, label, size=(125, 125))
+            self.btns.update({slot_map[slot_number] : btn})
             grid_sizer_1.Add(btn, 0, wx.SHAPED | wx.FIXED_MINSIZE, 0)
-            btn.Bind(wx.EVT_BUTTON, lambda evt, temp=label: self.slot_button(evt, temp))
+            btn.Bind(wx.EVT_TOGGLEBUTTON, lambda evt, temp=label: self.slot_button(evt, temp))
 
         self.panel_2 = wx.Panel(self.panel_1, wx.ID_ANY, name="right")
         sizer_1.Add(self.panel_2, 1, wx.EXPAND, 0)
 
         sizer_3 = wx.BoxSizer(wx.VERTICAL)
 
-        grid_sizer_2 = wx.FlexGridSizer(5, 2, 0, 0)
+        grid_sizer_2 = wx.FlexGridSizer(6, 2, 5, 5)
         grid_sizer_2.AddGrowableCol(1, 0)
         sizer_3.Add(grid_sizer_2, 1, wx.EXPAND, 0)
 
@@ -213,35 +216,50 @@ class MyFrame(wx.Frame):
         self.text_ctrl_5 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
         grid_sizer_2.Add(self.text_ctrl_5, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
         
+        #label_6 = wx.StaticText(self.panel_2, wx.ID_ANY, "bpm")
+        self.est_bpm = wx.Button(self.panel_2, wx.ID_ANY, "est bpm")
+        grid_sizer_2.Add(self.est_bpm, 0, wx.EXPAND, 0)
+        #sizer_4.Add(self.est_bpm, 0, 0, 0)
+
+
+        self.text_ctrl_6 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_PROCESS_ENTER)
+        grid_sizer_2.Add(self.text_ctrl_6, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
+
+        sizer_3.AddSpacer(10)
+        
+        self.wf_panel = CanvasPanel(self.panel_2)
+        sizer_3.Add(self.wf_panel, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 20)
+
         sizer_4 = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_4.AddSpacer(250)
         self.load_sample = wx.Button(self.panel_2, wx.ID_ANY, "reload")
-        sizer_4.Add(self.load_sample, 0, 0, 0)
+        sizer_4.Add(self.load_sample, 0, wx.LEFT | wx.RIGHT, 10)
 
         self.play_sample = wx.Button(self.panel_2, wx.ID_ANY, "play")
-        sizer_4.Add(self.play_sample, 0, 0, 0)
+        sizer_4.Add(self.play_sample, 0, wx.LEFT | wx.RIGHT, 10)
 
         self.stop_sample = wx.Button(self.panel_2, wx.ID_ANY, "stop")
-        sizer_4.Add(self.stop_sample, 0, 0, 0)
+        sizer_4.Add(self.stop_sample, 0, wx.LEFT | wx.RIGHT, 10)
 
         self.loop_sample = wx.CheckBox(self.panel_2, wx.ID_ANY, "loop")
-        sizer_4.Add(self.loop_sample, 0, 0, 0)
+        sizer_4.Add(self.loop_sample, 0, wx.LEFT | wx.RIGHT, 10)
 
         sizer_3.Add(sizer_4, 1, wx.EXPAND, 0)
 
-        self.wf_panel = CanvasPanel(self.panel_2)
-        sizer_3.Add(self.wf_panel, 1, wx.EXPAND, 0)
 
-        sizer_3.Add((0, 0), 0, 0, 0)
+        #sizer_3.Add((0, 0), 0, 0, 0)
 
         self.panel_2.SetSizer(sizer_3)
 
 
         self.Layout()
 
+        self.est_bpm.Bind(wx.EVT_BUTTON, self.estimate_bpm)
         self.load_sample.Bind(wx.EVT_BUTTON, self.load_sample_button)
         self.play_sample.Bind(wx.EVT_BUTTON, self.play_sample_button)
         self.stop_sample.Bind(wx.EVT_BUTTON, self.stop_sample_button)
         self.loop_sample.Bind(wx.EVT_CHECKBOX, self.loop_sample_checkbox)
+        self.text_ctrl_6.Bind(wx.EVT_TEXT_ENTER, self.input_bpm)
 
         self.lastdir = ""
 
@@ -269,6 +287,7 @@ class MyFrame(wx.Frame):
         self.text_ctrl_3.SetValue(str(sample_list[active_slotnum].input_channels))
         self.text_ctrl_4.SetValue(str(sample_list[active_slotnum].input_bitdepth))
         self.text_ctrl_5.SetValue(str(sample_list[active_slotnum].input_duration))
+        self.text_ctrl_6.SetValue("{:.2f}".format(sample_list[active_slotnum].bpm))
         self.loop_sample.SetValue(sample_list[active_slotnum].loop)
         self.wf_panel.draw(sample_list[active_slotnum].get_waveform())
 
@@ -278,14 +297,18 @@ class MyFrame(wx.Frame):
         self.text_ctrl_3.SetValue('')
         self.text_ctrl_4.SetValue('')
         self.text_ctrl_5.SetValue('')
+        self.text_ctrl_6.SetValue('')
         self.loop_sample.SetValue(False)
         self.wf_panel.clear()
 
     def slot_button(self, event, button_label):  # wxGlade: MyFrame.<event_handler>
+        global active_slotnum
+        if (active_slotnum >= 0):
+            self.btns[active_slotnum + 1].SetValue(False)
         slot, slotnumstr = button_label.split('_')
         slotnum = int(slotnumstr) - 1
+        #print("{} {} {}".format(button_label, slotnum, active_slotnum))
         active_slotnum = slotnum
-        #print("{} {}".format(button_label, slotnum))
         if (sample_list[slotnum].input_file_is_set() == False):
             pathname = self.open_wav()
             if pathname is None:
@@ -313,6 +336,15 @@ class MyFrame(wx.Frame):
     def loop_sample_checkbox(self, event): 
         sample_list[active_slotnum].set_loop(self.loop_sample.GetValue())
 
+    def input_bpm(self, event):
+        bpm = self.text_ctrl_6.GetValue()
+        sample_list[active_slotnum].set_bpm(bpm)
+
+    def estimate_bpm(self, event):
+        bpm = sample_list[active_slotnum].estimate_bpm()
+        self.text_ctrl_6.SetValue("{:.2f}".format(bpm))
+        sample_list[active_slotnum].set_bpm(bpm)
+
 # end of class MyFrame
 
 #class MyApp(wx.App):
@@ -334,6 +366,6 @@ class MyApp(wit.InspectableApp):
 
 if __name__ == "__main__":
     sample_list = []
-    active_slotnum = 0 
+    active_slotnum = -1 
     app = MyApp()
     app.MainLoop()
