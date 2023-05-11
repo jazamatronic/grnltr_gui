@@ -23,14 +23,13 @@ import math
 # end wxGlade
 
 class CanvasPanel(wx.Panel):
-    def __init__(self, parent):
+    def __init__(self, parent, topFrame):
         wx.Panel.__init__(self, parent)
+        self.topFrame = topFrame
         self.figure = Figure(figsize=(2, 2))
         self.axes = self.figure.add_subplot()
         self.axes.get_yaxis().set_visible(False)
         self.canvas = FigureCanvas(self, -1, self.figure)
-        #self.toolbar = NavigationToolbar(self.canvas)
-        #self.toolbar.Realize()
         self.sizer = wx.BoxSizer(wx.VERTICAL)
         self.sizer.Add(self.canvas, 1, wx.LEFT | wx.TOP | wx.GROW)
         self.SetSizer(self.sizer)
@@ -131,9 +130,13 @@ class CanvasPanel(wx.Panel):
                 self.axes.set_xlim((xlim[0], newxr))
         self.canvas.draw()
         self.canvas.Refresh()
+        self.topFrame.update_usage_gauge()
 
 class MyFrame(wx.Frame):
     def __init__(self, *args, **kwds):
+        self.lastdir = ""
+        self.export_path = ""
+
         # begin wxGlade: MyFrame.__init__
         size = (1340, 620)
         #kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE
@@ -149,8 +152,15 @@ class MyFrame(wx.Frame):
         self.frame_menubar = wx.MenuBar()
         self.SetMenuBar(self.frame_menubar)
 
-        file_menu = wx.Menu("Export")
-        self.frame_menubar.Append(file_menu, "grnltr")
+        export_menu = wx.Menu()
+        # see https://wxpython.org/Phoenix/docs/html/stock_items.html for IDs
+        export_menu_item = export_menu.Append(wx.ID_CONVERT, "Export", "Export")
+        setup_menu_item = export_menu.Append(wx.ID_SAVE, "Save Setup", "Save Setup")
+        load_menu_item = export_menu.Append(wx.ID_OPEN, "Open Setup", "Open Setup")
+        self.Bind(wx.EVT_MENU, self.export, export_menu_item) 
+        self.Bind(wx.EVT_MENU, self.save_setup, setup_menu_item) 
+        self.Bind(wx.EVT_MENU, self.load_setup, load_menu_item) 
+        self.frame_menubar.Append(export_menu, "grnltr")
         # Menu Bar end
 
         self.panel_1 = wx.Panel(self, wx.ID_ANY, name="main")
@@ -171,7 +181,6 @@ class MyFrame(wx.Frame):
         label_gauge = wx.StaticText(self.panel_1, wx.ID_ANY, "mem")
         sizer_gauge.Add(label_gauge, 0, wx.ALIGN_CENTER, 0)
 
-        #self.gauge_1 = PG.PyGauge(self.panel_1, wx.ID_ANY, range=100, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(380, 40))
         self.gauge_1 = PG.PyGauge(self.panel_1, wx.ID_ANY, range=100, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(300, 40))
         self.gauge_1.SetBorderColor("black")
         sizer_gauge.Add(self.gauge_1, 1, wx.EXPAND | wx.RIGHT, 15)
@@ -187,7 +196,7 @@ class MyFrame(wx.Frame):
                      5:9,  6:10, 7:11, 8:12,
                      1:13, 2:14, 3:15, 4:16 }
         for slot_number in range(1, 17, 1): 
-            sample_list.append(smpl())
+            sample_list.append(smpl(slot_number))
             label = "slot_{:02d}".format(slot_map[slot_number])
             btn = wx.ToggleButton(self.panel_1, wx.ID_ANY, label, size=(115, 115))
             self.btns.update({slot_map[slot_number] : btn})
@@ -241,7 +250,7 @@ class MyFrame(wx.Frame):
         self.text_ctrl_6 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_PROCESS_ENTER)
         grid_sizer_2.Add(self.text_ctrl_6, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.RIGHT, 10)
 
-        self.wf_panel = CanvasPanel(self.panel_2)
+        self.wf_panel = CanvasPanel(self.panel_2, self)
         sizer_3.Add(self.wf_panel, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 20)
 
         sizer_4 = wx.BoxSizer(wx.HORIZONTAL)
@@ -275,8 +284,6 @@ class MyFrame(wx.Frame):
         self.loop_sample.Bind(wx.EVT_CHECKBOX, self.loop_sample_checkbox)
         self.rev_sample.Bind(wx.EVT_CHECKBOX, self.rev_sample_checkbox)
         self.text_ctrl_6.Bind(wx.EVT_TEXT_ENTER, self.input_bpm)
-
-        self.lastdir = ""
 
         # end wxGlade
 
@@ -319,12 +326,12 @@ class MyFrame(wx.Frame):
         self.rev_sample.SetValue(False)
         self.wf_panel.clear()
 
-    # Need to figure out how to call this when the matplot lib canvas is updated
     def update_usage_gauge(self):
         total_sample_size = 0
         for i in sample_list:
             total_sample_size += i.size_estimate
         self.gauge_1.SetValue(int((total_sample_size / free_bytes) * 100))
+        self.Refresh()
 
     def slot_button(self, event, button_label):  # wxGlade: MyFrame.<event_handler>
         global active_slotnum
@@ -378,6 +385,65 @@ class MyFrame(wx.Frame):
         self.text_ctrl_6.SetValue("{:.2f}".format(bpm))
         sample_list[active_slotnum].set_bpm(bpm)
         event.Skip()
+
+    def export(self, event):
+        with wx.DirDialog (None, "Choose export directory", "", wx.DD_DEFAULT_STYLE) as dirDialog:
+            if self.export_path != "":
+                dirDialog.SetPath(self.export_path)
+            if dirDialog.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+            self.export_path = dirDialog.GetPath()
+
+        f = open("{}/grnltr.cfg".format(self.export_path), "w")
+        f.write("#file,bpm,loop,rev\n")
+        for i in sample_list:
+            if i.input_file_is_set():
+                filename = "{:02d}.wav".format(i.slot)
+                i.set_export_filename("{}/{}".format(self.export_path, filename))
+                i.export_wav()
+                print(i.sample_info(True))
+                f.write("{}\n".format(i.sample_info(True)))
+        f.close()
+
+    def save_setup(self, event):
+        with wx.DirDialog (None, "Choose export directory", "", wx.DD_DEFAULT_STYLE) as dirDialog:
+            if self.export_path != "":
+                dirDialog.SetPath(self.export_path)
+            if dirDialog.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+            self.export_path = dirDialog.GetPath()
+
+        f = open("{}/grnltr.setup".format(self.export_path), "w")
+        f.write("#slot,file,bpm,loop,rev,start,end\n")
+        for i in sample_list:
+            if i.input_file_is_set():
+                f.write("{}\n".format(i.sample_info()))
+        f.close()
+
+    def load_setup(self, event):
+        global active_slotnum
+        with wx.FileDialog(self, "Open Setup file", wildcard="Setup files (*.setup)|*.setup;",
+                       style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
+
+            if self.export_path != "":
+                fileDialog.SetDirectory(self.export_path)
+            if fileDialog.ShowModal() == wx.ID_CANCEL:
+                return     # the user changed their mind
+            setup_file = fileDialog.GetPath()
+            f = open(setup_file, "r")
+            hdr = f.readline()
+            for i in f:
+                slot, pathname, bpm, loop, rev, start, end = i.split(",")
+                slot = int(slot)
+                active_slotnum = slot - 1
+                sample_list[active_slotnum].set_input_file(pathname)
+                sample_list[active_slotnum].set_bpm(float(bpm))
+                sample_list[active_slotnum].set_loop(loop == "True")
+                sample_list[active_slotnum].set_rev(rev == "True")
+                sample_list[active_slotnum].set_start(int(start))
+                sample_list[active_slotnum].set_end(int(end))
+            f.close()
+            self.display_sample_info()
 
 # end of class MyFrame
 

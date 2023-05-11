@@ -20,7 +20,8 @@ class smpl:
     import os
     import sounddevice as sd
     import numpy as np
-    def __init__(self):
+    def __init__(self, slot):
+        self.slot = slot
         self.export_rate = 48000
         self.export_channels = 1
         self.export_bitdepth = 16
@@ -78,8 +79,7 @@ class smpl:
 
     def export_wav(self):
         if hasattr(self, 'export_filename'):
-            #return self.tfm.build_file(self.input_filename, self.export_filename, return_output=True)
-            return self.tfm.build_file(self.get_waveform(False, False), self.export_filename, return_output=True)
+            return self.tfm.build_file(input_array=self.get_waveform(False, False), sample_rate_in=self.export_rate, output_filepath=self.export_filename, return_output=True)
         else: 
             print('Export filename not defined - please set_export_filename')
 
@@ -104,11 +104,14 @@ class smpl:
     def set_bars(self, bars):
         self.num_bars = bars
 
-    def sample_info(self):
-        if hasattr(self, 'export_filename'):
-            return "{},{},{:.2f},{:.2f},{}".format(self.os.path.basename(self.export_filename), self.os.path.basename(self.input_filename), self.bpm, self.num_bars, self.size_estimate)
-        else: 
-            print('Export filename not defined - please set_export_filename')
+    def sample_info(self, for_config=False):
+        if for_config:
+            if hasattr(self, 'export_filename'):
+                return "{},{:.2f},{},{}".format(self.os.path.basename(self.export_filename), self.bpm, self.loop, self.rev)
+            else: 
+                print('Export filename not defined - please set_export_filename')
+        else:
+            return "{},{},{:.2f},{},{},{},{}".format(self.slot, self.input_filename, self.bpm, self.loop, self.rev, self.start, self.end)
 
     def set_start(self, start):
         start = self.math.floor(start)
