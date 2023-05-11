@@ -1,0 +1,6 @@
+sox
+numpy == 1.21
+librosa
+sounddevice
+matplotlib
+wxpython

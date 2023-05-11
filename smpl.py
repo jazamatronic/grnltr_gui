@@ -19,6 +19,7 @@ class smpl:
     import librosa
     import os
     import sounddevice as sd
+    import numpy as np
     def __init__(self):
         self.export_rate = 48000
         self.export_channels = 1
@@ -29,6 +30,7 @@ class smpl:
         self.start = 0
         self.end = 0
         self.loop = False
+        self.rev = False
 
     def input_file_is_set(self):
         return hasattr(self, 'input_filename')
@@ -56,19 +58,28 @@ class smpl:
     #       loopability
     def preview(self):
         if self.input_file_is_set():
-            self.sd.play(self.get_waveform()[self.start:self.end], self.export_rate, loop=self.loop)
+            self.sd.play(self.get_waveform(self.rev, False), self.export_rate, loop=self.loop)
 
     def stop(self):
         self.sd.stop()
 
-    def get_waveform(self):
+    def get_waveform(self, rev, full):
         if not hasattr(self, 'wf_array'):
             self.wf_array = self.tfm.build_array(self.input_filename)
-        return self.wf_array
+        if full:
+            start = 0
+            end = self.num_samples
+        else:
+            start = self.start
+            end = self.end
+        if rev:
+            return self.np.flip(self.wf_array[start:end])
+        return self.wf_array[start:end]
 
     def export_wav(self):
         if hasattr(self, 'export_filename'):
-            return self.tfm.build_file(self.input_filename, self.export_filename, return_output=True)
+            #return self.tfm.build_file(self.input_filename, self.export_filename, return_output=True)
+            return self.tfm.build_file(self.get_waveform(False, False), self.export_filename, return_output=True)
         else: 
             print('Export filename not defined - please set_export_filename')
 
@@ -123,3 +134,6 @@ class smpl:
 
     def set_loop(self, loop):
         self.loop = loop
+
+    def set_rev(self, rev):
+        self.rev = rev

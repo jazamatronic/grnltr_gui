@@ -155,7 +155,6 @@ class MyFrame(wx.Frame):
         self.panel_1 = wx.Panel(self, wx.ID_ANY, name="main")
 
         sizer_1 = wx.BoxSizer(wx.HORIZONTAL)
-        self.panel_1.SetSizer(sizer_1)
 
         sizer_2 = wx.BoxSizer(wx.VERTICAL)
         flags = wx.SizerFlags(0)
@@ -163,11 +162,13 @@ class MyFrame(wx.Frame):
         flags.Align(wx.ALIGN_LEFT)
         sizer_1.Add(sizer_2, flags)
 
-        self.gauge_1 = wx.Gauge(self.panel_1, wx.ID_ANY, 64, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(394, 40))
+        self.gauge_1 = wx.Gauge(self.panel_1, wx.ID_ANY, range=100, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(420, 40))
         sizer_2.Add(self.gauge_1, 0, wx.EXPAND, 0)
 
+        sizer_2.AddSpacer(10)
+
         grid_sizer_1 = wx.GridSizer(4, 4, 0, 0)
-        sizer_2.Add(grid_sizer_1, 1, wx.SHAPED | wx.FIXED_MINSIZE, 0)
+        sizer_2.Add(grid_sizer_1, 0, wx.SHAPED | wx.FIXED_MINSIZE, 0)
 
         slot_map = { 13:1, 14:2, 15:3, 16:4,
                      9:5,  10:6, 11:7, 12:8,
@@ -181,6 +182,8 @@ class MyFrame(wx.Frame):
             grid_sizer_1.Add(btn, 0, wx.SHAPED | wx.FIXED_MINSIZE, 0)
             btn.Bind(wx.EVT_TOGGLEBUTTON, lambda evt, temp=label: self.slot_button(evt, temp))
 
+        sizer_1.AddSpacer(10)
+
         self.panel_2 = wx.Panel(self.panel_1, wx.ID_ANY, name="right")
         sizer_1.Add(self.panel_2, 1, wx.EXPAND, 0)
 
@@ -188,49 +191,44 @@ class MyFrame(wx.Frame):
 
         grid_sizer_2 = wx.FlexGridSizer(6, 2, 5, 5)
         grid_sizer_2.AddGrowableCol(1, 0)
-        sizer_3.Add(grid_sizer_2, 1, wx.EXPAND, 0)
+        sizer_3.Add(grid_sizer_2, 0, wx.EXPAND, 0)
 
         label_1 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_file")
-        grid_sizer_2.Add(label_1, 0, 0, 0)
+        grid_sizer_2.Add(label_1, 0, wx.ALIGN_CENTER, 0)
 
         self.text_ctrl_1 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        grid_sizer_2.Add(self.text_ctrl_1, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
+        grid_sizer_2.Add(self.text_ctrl_1, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.RIGHT, 10)
 
         label_2 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_rate")
-        grid_sizer_2.Add(label_2, 0, 0, 0)
+        grid_sizer_2.Add(label_2, 0, wx.ALIGN_CENTER, 0)
 
         self.text_ctrl_2 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        grid_sizer_2.Add(self.text_ctrl_2, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
+        grid_sizer_2.Add(self.text_ctrl_2, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.RIGHT, 10)
 
         label_3 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_channels")
-        grid_sizer_2.Add(label_3, 0, 0, 0)
+        grid_sizer_2.Add(label_3, 0, wx.ALIGN_CENTER, 0)
 
         self.text_ctrl_3 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        grid_sizer_2.Add(self.text_ctrl_3, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
+        grid_sizer_2.Add(self.text_ctrl_3, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.RIGHT, 10)
 
         label_4 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_bitdepth")
-        grid_sizer_2.Add(label_4, 0, 0, 0)
+        grid_sizer_2.Add(label_4, 0, wx.ALIGN_CENTER, 0)
 
         self.text_ctrl_4 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        grid_sizer_2.Add(self.text_ctrl_4, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
+        grid_sizer_2.Add(self.text_ctrl_4, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.RIGHT, 10)
 
         label_5 = wx.StaticText(self.panel_2, wx.ID_ANY, "input_duration")
-        grid_sizer_2.Add(label_5, 0, 0, 0)
+        grid_sizer_2.Add(label_5, 0, wx.ALIGN_CENTER, 0)
 
         self.text_ctrl_5 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_READONLY)
-        grid_sizer_2.Add(self.text_ctrl_5, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
+        grid_sizer_2.Add(self.text_ctrl_5, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.RIGHT, 10)
         
-        #label_6 = wx.StaticText(self.panel_2, wx.ID_ANY, "bpm")
         self.est_bpm = wx.Button(self.panel_2, wx.ID_ANY, "est bpm")
         grid_sizer_2.Add(self.est_bpm, 0, wx.EXPAND, 0)
-        #sizer_4.Add(self.est_bpm, 0, 0, 0)
-
 
         self.text_ctrl_6 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_PROCESS_ENTER)
-        grid_sizer_2.Add(self.text_ctrl_6, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
+        grid_sizer_2.Add(self.text_ctrl_6, 0, wx.EXPAND | wx.ALIGN_LEFT | wx.RIGHT, 10)
 
-#        sizer_3.AddSpacer(10)
-        
         self.wf_panel = CanvasPanel(self.panel_2)
         sizer_3.Add(self.wf_panel, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 20)
 
@@ -248,13 +246,13 @@ class MyFrame(wx.Frame):
         self.loop_sample = wx.CheckBox(self.panel_2, wx.ID_ANY, "loop")
         sizer_4.Add(self.loop_sample, 0, wx.LEFT | wx.RIGHT, 10)
 
+        self.rev_sample = wx.CheckBox(self.panel_2, wx.ID_ANY, "rev")
+        sizer_4.Add(self.rev_sample, 0, wx.LEFT | wx.RIGHT, 10)
+
         sizer_3.Add(sizer_4, 1, wx.EXPAND, 0)
 
-
-        #sizer_3.Add((0, 0), 0, 0, 0)
-
+        self.panel_1.SetSizer(sizer_1)
         self.panel_2.SetSizer(sizer_3)
-
 
         self.Layout()
 
@@ -263,6 +261,7 @@ class MyFrame(wx.Frame):
         self.play_sample.Bind(wx.EVT_BUTTON, self.play_sample_button)
         self.stop_sample.Bind(wx.EVT_BUTTON, self.stop_sample_button)
         self.loop_sample.Bind(wx.EVT_CHECKBOX, self.loop_sample_checkbox)
+        self.rev_sample.Bind(wx.EVT_CHECKBOX, self.rev_sample_checkbox)
         self.text_ctrl_6.Bind(wx.EVT_TEXT_ENTER, self.input_bpm)
 
         self.lastdir = ""
@@ -293,7 +292,9 @@ class MyFrame(wx.Frame):
         self.text_ctrl_5.SetValue(str(sample_list[active_slotnum].input_duration))
         self.text_ctrl_6.SetValue("{:.2f}".format(sample_list[active_slotnum].bpm))
         self.loop_sample.SetValue(sample_list[active_slotnum].loop)
-        self.wf_panel.draw(sample_list[active_slotnum].get_waveform())
+        self.rev_sample.SetValue(sample_list[active_slotnum].rev)
+        self.wf_panel.draw(sample_list[active_slotnum].get_waveform(False, True))
+        self.update_usage_gauge()
 
     def clear_sample_info(self):
         self.text_ctrl_1.SetValue('')
@@ -303,7 +304,18 @@ class MyFrame(wx.Frame):
         self.text_ctrl_5.SetValue('')
         self.text_ctrl_6.SetValue('')
         self.loop_sample.SetValue(False)
+        self.rev_sample.SetValue(False)
         self.wf_panel.clear()
+
+    def update_usage_gauge(self):
+        total_sample_size = 0
+        # 64M of RAM, minus the live rec buffer
+        free_bytes = (64 * 1024 * 1024) - 153600
+        for i in sample_list:
+            total_sample_size += i.size_estimate
+        self.gauge_1.SetValue(int((total_sample_size / free_bytes) * 100))
+
+
 
     def slot_button(self, event, button_label):  # wxGlade: MyFrame.<event_handler>
         global active_slotnum
@@ -333,21 +345,30 @@ class MyFrame(wx.Frame):
 
     def play_sample_button(self, event): 
         sample_list[active_slotnum].preview()
+        event.Skip()
 
     def stop_sample_button(self, event): 
         sample_list[active_slotnum].stop()
+        event.Skip()
 
     def loop_sample_checkbox(self, event): 
         sample_list[active_slotnum].set_loop(self.loop_sample.GetValue())
+        event.Skip()
+
+    def rev_sample_checkbox(self, event): 
+        sample_list[active_slotnum].set_rev(self.rev_sample.GetValue())
+        event.Skip()
 
     def input_bpm(self, event):
         bpm = self.text_ctrl_6.GetValue()
         sample_list[active_slotnum].set_bpm(bpm)
+        event.Skip()
 
     def estimate_bpm(self, event):
         bpm = sample_list[active_slotnum].estimate_bpm()
         self.text_ctrl_6.SetValue("{:.2f}".format(bpm))
         sample_list[active_slotnum].set_bpm(bpm)
+        event.Skip()
 
 # end of class MyFrame
 
