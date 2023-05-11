@@ -43,6 +43,8 @@ class smpl:
         self.num_samples = self.math.ceil(self.input_duration * self.export_rate)
         self.set_start(0)
         self.set_end(self.num_samples)
+        if hasattr(self, 'wf_array'):
+            del self.wf_array
         self.tfm = self.sox.Transformer()
         self.tfm.set_output_format(file_type='wav', rate=self.export_rate, channels=self.export_channels, bits=self.export_bitdepth, encoding='signed-integer')
 

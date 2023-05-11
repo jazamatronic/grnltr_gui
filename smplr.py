@@ -134,8 +134,9 @@ class CanvasPanel(wx.Panel):
 class MyFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyFrame.__init__
-        size = (1500, 500)
-        kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE
+        size = (1340, 620)
+        #kwds["style"] = kwds.get("style", 0) | wx.DEFAULT_FRAME_STYLE
+        kwds["style"] = kwds.get("style", 0) | (wx.DEFAULT_FRAME_STYLE & ~(wx.RESIZE_BORDER | wx.MAXIMIZE_BOX))
         wx.Frame.__init__(self, *args, **kwds, size=size)
         # buttons are 94
         self.SetSize(size)
@@ -146,6 +147,9 @@ class MyFrame(wx.Frame):
         # Menu Bar
         self.frame_menubar = wx.MenuBar()
         self.SetMenuBar(self.frame_menubar)
+
+        file_menu = wx.Menu("Export")
+        self.frame_menubar.Append(file_menu, "grnltr")
         # Menu Bar end
 
         self.panel_1 = wx.Panel(self, wx.ID_ANY, name="main")
@@ -159,7 +163,7 @@ class MyFrame(wx.Frame):
         flags.Align(wx.ALIGN_LEFT)
         sizer_1.Add(sizer_2, flags)
 
-        self.gauge_1 = wx.Gauge(self.panel_1, wx.ID_ANY, 64, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(394, 4))
+        self.gauge_1 = wx.Gauge(self.panel_1, wx.ID_ANY, 64, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(394, 40))
         sizer_2.Add(self.gauge_1, 0, wx.EXPAND, 0)
 
         grid_sizer_1 = wx.GridSizer(4, 4, 0, 0)
@@ -172,7 +176,7 @@ class MyFrame(wx.Frame):
         for slot_number in range(1, 17, 1): 
             sample_list.append(smpl())
             label = "slot_{:02d}".format(slot_map[slot_number])
-            btn = wx.ToggleButton(self.panel_1, wx.ID_ANY, label, size=(125, 125))
+            btn = wx.ToggleButton(self.panel_1, wx.ID_ANY, label, size=(115, 115))
             self.btns.update({slot_map[slot_number] : btn})
             grid_sizer_1.Add(btn, 0, wx.SHAPED | wx.FIXED_MINSIZE, 0)
             btn.Bind(wx.EVT_TOGGLEBUTTON, lambda evt, temp=label: self.slot_button(evt, temp))
@@ -225,7 +229,7 @@ class MyFrame(wx.Frame):
         self.text_ctrl_6 = wx.TextCtrl(self.panel_2, wx.ID_ANY, "", style=wx.TE_PROCESS_ENTER)
         grid_sizer_2.Add(self.text_ctrl_6, 0, wx.EXPAND | wx.ALIGN_LEFT, 0)
 
-        sizer_3.AddSpacer(10)
+#        sizer_3.AddSpacer(10)
         
         self.wf_panel = CanvasPanel(self.panel_2)
         sizer_3.Add(self.wf_panel, 1, wx.EXPAND | wx.LEFT | wx.RIGHT | wx.BOTTOM, 20)
