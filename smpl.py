@@ -117,6 +117,7 @@ class smpl:
         if (start > self.num_samples):
             start = self.num_samples 
         self.start = start
+        self.update_size_estimate()
 
     def set_end(self, end):
         end = self.math.ceil(end)
@@ -125,6 +126,10 @@ class smpl:
         if (end > self.num_samples):
             end = self.num_samples
         self.end = end
+        self.update_size_estimate()
+
+    def update_size_estimate(self):
+        self.size_estimate = (self.end - self.start) * (self.export_bitdepth / 8)
 
     def get_start(self):
         return self.start

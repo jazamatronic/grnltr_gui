@@ -7,6 +7,8 @@
 # begin wxGlade: dependencies
 import wx
 import wx.lib.mixins.inspection as wit
+import wx.lib.agw.pygauge as PG
+
 
 from matplotlib.backends.backend_wxagg import (
     FigureCanvasWxAgg as FigureCanvas,
@@ -130,7 +132,6 @@ class CanvasPanel(wx.Panel):
         self.canvas.draw()
         self.canvas.Refresh()
 
-
 class MyFrame(wx.Frame):
     def __init__(self, *args, **kwds):
         # begin wxGlade: MyFrame.__init__
@@ -162,9 +163,20 @@ class MyFrame(wx.Frame):
         flags.Align(wx.ALIGN_LEFT)
         sizer_1.Add(sizer_2, flags)
 
-        self.gauge_1 = wx.Gauge(self.panel_1, wx.ID_ANY, range=100, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(420, 40))
-        sizer_2.Add(self.gauge_1, 0, wx.EXPAND, 0)
+        sizer_2.AddSpacer(10)
 
+        sizer_gauge = wx.FlexGridSizer(1, 2, 5, 5)
+        sizer_gauge.AddGrowableCol(1, 0)
+
+        label_gauge = wx.StaticText(self.panel_1, wx.ID_ANY, "mem")
+        sizer_gauge.Add(label_gauge, 0, wx.ALIGN_CENTER, 0)
+
+        #self.gauge_1 = PG.PyGauge(self.panel_1, wx.ID_ANY, range=100, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(380, 40))
+        self.gauge_1 = PG.PyGauge(self.panel_1, wx.ID_ANY, range=100, style=wx.GA_HORIZONTAL | wx.GA_SMOOTH, size=(300, 40))
+        self.gauge_1.SetBorderColor("black")
+        sizer_gauge.Add(self.gauge_1, 1, wx.EXPAND | wx.RIGHT, 15)
+
+        sizer_2.Add(sizer_gauge, 0, wx.EXPAND, 0)
         sizer_2.AddSpacer(10)
 
         grid_sizer_1 = wx.GridSizer(4, 4, 0, 0)
@@ -307,15 +319,12 @@ class MyFrame(wx.Frame):
         self.rev_sample.SetValue(False)
         self.wf_panel.clear()
 
+    # Need to figure out how to call this when the matplot lib canvas is updated
     def update_usage_gauge(self):
         total_sample_size = 0
-        # 64M of RAM, minus the live rec buffer
-        free_bytes = (64 * 1024 * 1024) - 153600
         for i in sample_list:
             total_sample_size += i.size_estimate
         self.gauge_1.SetValue(int((total_sample_size / free_bytes) * 100))
-
-
 
     def slot_button(self, event, button_label):  # wxGlade: MyFrame.<event_handler>
         global active_slotnum
@@ -360,7 +369,7 @@ class MyFrame(wx.Frame):
         event.Skip()
 
     def input_bpm(self, event):
-        bpm = self.text_ctrl_6.GetValue()
+        bpm = float(self.text_ctrl_6.GetValue())
         sample_list[active_slotnum].set_bpm(bpm)
         event.Skip()
 
@@ -392,5 +401,7 @@ class MyApp(wit.InspectableApp):
 if __name__ == "__main__":
     sample_list = []
     active_slotnum = -1 
+    # 64M of RAM, minus the live rec buffer
+    free_bytes = (64 * 1024 * 1024) - 153600
     app = MyApp()
     app.MainLoop()
