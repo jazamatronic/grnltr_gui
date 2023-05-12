@@ -155,11 +155,15 @@ class MyFrame(wx.Frame):
         export_menu = wx.Menu()
         # see https://wxpython.org/Phoenix/docs/html/stock_items.html for IDs
         export_menu_item = export_menu.Append(wx.ID_CONVERT, "Export", "Export")
-        setup_menu_item = export_menu.Append(wx.ID_SAVE, "Save Setup", "Save Setup")
+        export_menu.Append(wx.ID_SEPARATOR)
         load_menu_item = export_menu.Append(wx.ID_OPEN, "Open Setup", "Open Setup")
+        setup_menu_item = export_menu.Append(wx.ID_SAVE, "Save Setup", "Save Setup")
+        export_menu.Append(wx.ID_SEPARATOR)
+        exit_menu_item = export_menu.Append(wx.ID_EXIT, "Quit", "Bye")
         self.Bind(wx.EVT_MENU, self.export, export_menu_item) 
         self.Bind(wx.EVT_MENU, self.save_setup, setup_menu_item) 
         self.Bind(wx.EVT_MENU, self.load_setup, load_menu_item) 
+        self.Bind(wx.EVT_MENU, self.exit_app,   exit_menu_item) 
         self.frame_menubar.Append(export_menu, "grnltr")
         # Menu Bar end
 
@@ -386,6 +390,8 @@ class MyFrame(wx.Frame):
         sample_list[active_slotnum].set_bpm(bpm)
         event.Skip()
 
+    # Menu Items
+
     def export(self, event):
         with wx.DirDialog (None, "Choose export directory", "", wx.DD_DEFAULT_STYLE) as dirDialog:
             if self.export_path != "":
@@ -411,7 +417,7 @@ class MyFrame(wx.Frame):
                 dirDialog.SetPath(self.export_path)
             if dirDialog.ShowModal() == wx.ID_CANCEL:
                 return     # the user changed their mind
-            self.export_path = dirDialog.GetPath()
+        self.export_path = dirDialog.GetPath()
 
         f = open("{}/grnltr.setup".format(self.export_path), "w")
         f.write("#slot,file,bpm,loop,rev,start,end\n")
@@ -424,26 +430,38 @@ class MyFrame(wx.Frame):
         global active_slotnum
         with wx.FileDialog(self, "Open Setup file", wildcard="Setup files (*.setup)|*.setup;",
                        style=wx.FD_OPEN | wx.FD_FILE_MUST_EXIST) as fileDialog:
-
             if self.export_path != "":
                 fileDialog.SetDirectory(self.export_path)
             if fileDialog.ShowModal() == wx.ID_CANCEL:
                 return     # the user changed their mind
-            setup_file = fileDialog.GetPath()
-            f = open(setup_file, "r")
-            hdr = f.readline()
-            for i in f:
-                slot, pathname, bpm, loop, rev, start, end = i.split(",")
-                slot = int(slot)
-                active_slotnum = slot - 1
-                sample_list[active_slotnum].set_input_file(pathname)
-                sample_list[active_slotnum].set_bpm(float(bpm))
-                sample_list[active_slotnum].set_loop(loop == "True")
-                sample_list[active_slotnum].set_rev(rev == "True")
-                sample_list[active_slotnum].set_start(int(start))
-                sample_list[active_slotnum].set_end(int(end))
-            f.close()
-            self.display_sample_info()
+
+        if (active_slotnum >= 0):
+            self.btns[active_slotnum + 1].SetValue(False)
+        setup_file = fileDialog.GetPath()
+        f = open(setup_file, "r")
+        hdr = f.readline()
+        for i in f:
+            slot, pathname, bpm, loop, rev, start, end = i.split(",")
+            slot = int(slot)
+            active_slotnum = slot - 1
+            sample_list[active_slotnum].set_input_file(pathname)
+            sample_list[active_slotnum].set_bpm(float(bpm))
+            sample_list[active_slotnum].set_loop(loop == "True")
+            sample_list[active_slotnum].set_rev(rev == "True")
+            sample_list[active_slotnum].set_start(int(start))
+            sample_list[active_slotnum].set_end(int(end))
+        f.close()
+        self.btns[active_slotnum + 1].SetValue(True)
+        self.display_sample_info()
+
+    def exit_app(self, event):
+        dlg = wx.MessageDialog(self,
+            "Done sample curation?",
+            "Confirm Exit", wx.OK|wx.CANCEL|wx.ICON_QUESTION)
+        result = dlg.ShowModal()
+        dlg.Destroy()
+        if result == wx.ID_OK:
+            self.Destroy()
 
 # end of class MyFrame
 
