@@ -1,3 +1,3 @@
 #!/bin/bash
 source .venv/bin/activate
-./smplr.py
+./grnltr_gui.py
