@@ -144,7 +144,7 @@ class MyFrame(wx.Frame):
         wx.Frame.__init__(self, *args, **kwds, size=size)
         # buttons are 94
         self.SetSize(size)
-        self.SetTitle("smplr")
+        self.SetTitle("grnltr_gui")
 
         self.btns = {}
 
