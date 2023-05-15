@@ -337,7 +337,13 @@ class MyFrame(wx.Frame):
         total_sample_size = 0
         for i in sample_list:
             total_sample_size += i.size_estimate
-        self.gauge_1.SetValue(int((total_sample_size / free_bytes) * 100))
+        mem_pct = int((total_sample_size / sample_mem_bytes) * 100)
+        if (mem_pct > 100):
+            mem_pct = 100 
+            with wx.MessageDialog(self, "WARNING: Sample causes mem overflow", caption="Out of Mem",
+                       style=wx.OK ) as msgDialog:
+                msgDialog.ShowModal()
+        self.gauge_1.SetValue(mem_pct)
         self.Refresh()
 
     def slot_button(self, event, button_label):  # wxGlade: MyFrame.<event_handler>
@@ -497,6 +503,6 @@ if __name__ == "__main__":
     sample_list = []
     active_slotnum = -1 
     # 64M of RAM, minus the live rec buffer
-    free_bytes = (64 * 1024 * 1024) - 153600
+    sample_mem_bytes = (64 * 1024 * 1024) - 153600
     app = MyApp()
     app.MainLoop()
