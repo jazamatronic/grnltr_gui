@@ -154,12 +154,15 @@ class MyFrame(wx.Frame):
 
         export_menu = wx.Menu()
         # see https://wxpython.org/Phoenix/docs/html/stock_items.html for IDs
+        new_menu_item = export_menu.Append(wx.ID_NEW, "New", "New")
+        export_menu.Append(wx.ID_SEPARATOR)
         export_menu_item = export_menu.Append(wx.ID_CONVERT, "Export", "Export")
         export_menu.Append(wx.ID_SEPARATOR)
         load_menu_item = export_menu.Append(wx.ID_OPEN, "Open Setup", "Open Setup")
         setup_menu_item = export_menu.Append(wx.ID_SAVE, "Save Setup", "Save Setup")
         export_menu.Append(wx.ID_SEPARATOR)
         exit_menu_item = export_menu.Append(wx.ID_EXIT, "Quit", "Bye")
+        self.Bind(wx.EVT_MENU, self.new_grnltr, new_menu_item) 
         self.Bind(wx.EVT_MENU, self.export, export_menu_item) 
         self.Bind(wx.EVT_MENU, self.save_setup, setup_menu_item) 
         self.Bind(wx.EVT_MENU, self.load_setup, load_menu_item) 
@@ -195,15 +198,15 @@ class MyFrame(wx.Frame):
         grid_sizer_1 = wx.GridSizer(4, 4, 0, 0)
         sizer_2.Add(grid_sizer_1, 0, wx.SHAPED | wx.FIXED_MINSIZE, 0)
 
-        slot_map = { 13:1, 14:2, 15:3, 16:4,
+        self.slot_map = { 13:1, 14:2, 15:3, 16:4,
                      9:5,  10:6, 11:7, 12:8,
                      5:9,  6:10, 7:11, 8:12,
                      1:13, 2:14, 3:15, 4:16 }
         for slot_number in range(1, 17, 1): 
             sample_list.append(smpl(slot_number))
-            label = "slot_{:02d}".format(slot_map[slot_number])
+            label = "slot_{:02d}".format(self.slot_map[slot_number])
             btn = wx.ToggleButton(self.panel_1, wx.ID_ANY, label, size=(115, 115))
-            self.btns.update({slot_map[slot_number] : btn})
+            self.btns.update({self.slot_map[slot_number] : btn})
             grid_sizer_1.Add(btn, 0, wx.SHAPED | wx.FIXED_MINSIZE, 0)
             btn.Bind(wx.EVT_TOGGLEBUTTON, lambda evt, temp=label: self.slot_button(evt, temp))
 
@@ -391,6 +394,14 @@ class MyFrame(wx.Frame):
         event.Skip()
 
     # Menu Items
+
+    def new_grnltr(self, event):
+        global sample_list
+        sample_list = []
+        for slot_number in range(1, 17, 1): 
+            sample_list.append(smpl(slot_number))
+        self.clear_sample_info()
+        self.update_usage_gauge()
 
     def export(self, event):
         with wx.DirDialog (None, "Choose export directory", "", wx.DD_DEFAULT_STYLE) as dirDialog:
